@@ -1678,7 +1678,7 @@ class Tickets
 
         $statusLabels = $this->getStatusLabels($milestone->projectId);
 
-        $defaultEffort = 3;
+        $defaultEffort = 4;
         $defaultPriority = 3; // low number high priority high priority 1-5 low priority
 
         // We want to take priority into consideration but not make it the main driver.
@@ -1970,7 +1970,7 @@ class Tickets
         $values = [
             'headline' => $params['headline'],
             'type' => 'milestone',
-            'description' => '',
+            'description' => $params['description'] ?? '',
             'projectId' => $params['projectId'] ?? session('currentProject'),
             'editorId' => $params['editorId'] ?? session('userdata.id'),
             'userId' => session('userdata.id') ?? $params['userId'] ?? null,
@@ -1984,7 +1984,7 @@ class Tickets
             'priority' => 3,
             'dependingTicketId' => '',
             'milestoneid' => $params['dependentMilestone'] ?? '',
-            'acceptanceCriteria' => '',
+            'acceptanceCriteria' => $params['checklist'] ?? '',
             'tags' => $params['tags'] ?? '',
             'editFrom' => $params['editFrom'] ?? '',
             'editTo' => $params['editTo'] ?? '',
@@ -2575,7 +2575,7 @@ class Tickets
         $values = [
             'headline' => $params['headline'],
             'type' => 'milestone',
-            'description' => '',
+            'description' => $params['description'] ?? '',
             'projectId' => $targetProjectId,
             'editorId' => $params['editorId'],
             'userId' => session('userdata.id'),
@@ -2586,7 +2586,7 @@ class Tickets
             'hourRemaining' => '',
             'planHours' => '',
             'sprint' => '',
-            'acceptanceCriteria' => '',
+            'acceptanceCriteria' => $params['checklist'] ?? '',
             'priority' => 3,
             'dependingTicketId' => '',
             'milestoneid' => $params['dependentMilestone'],

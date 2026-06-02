@@ -36,7 +36,9 @@ class Menu
                 'type' => 'submenu', 'id' => 'understand', 'title' => 'menu.think', 'visual' => 'closed',
                 'submenu' => [
                     30 => ['type' => 'item', 'module' => 'ideas', 'title' => 'menu.ideas', 'icon' => 'fa fa-fw fa-lightbulb', 'tooltip' => 'menu.ideas_tooltip', 'href' => '', 'hrefFunction' => 'getIdeaMenu', 'active' => ['showBoards', 'advancedBoards']],
-                    50 => ['type' => 'item', 'module' => 'blueprints', 'title' => 'menu.blueprints', 'icon' => 'fa fa-fw fa-compass-drafting', 'tooltip' => 'menu.blueprints_tooltip', 'href' => '/blueprints/showBoards'],
+                    40 => ['type' => 'item', 'module' => 'whiteboards', 'title' => 'menu.whiteboards', 'icon' => 'fa fa-fw fa-chalkboard', 'tooltip' => 'menu.whiteboards_tooltip', 'href' => '/whiteboards/showBoards', 'active' => ['showBoards', 'show']],
+                    50 => ['type' => 'item', 'module' => 'blueprints', 'title' => 'menu.blueprints', 'icon' => 'fa fa-fw fa-compass-drafting', 'tooltip' => 'menu.blueprints_tooltip', 'href' => '/blueprints/showBoards', 'active' => ['showBoards']],
+                    60 => ['type' => 'item', 'module' => 'blueprints', 'title' => 'menu.retroscanvas', 'icon' => 'fa fa-fw fa-hand-spock', 'tooltip' => 'menu.retroscanvas_tooltip', 'href' => '/blueprints/retros/showCanvas', 'active' => ['retros']],
                 ],
             ],
             40 => [

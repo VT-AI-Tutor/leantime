@@ -53,13 +53,13 @@ class TicketDesignTokens
      * Effort/Story points with labels and size mappings
      */
     public const EFFORTS = [
-        0.5 => ['label' => '< 2min', 'size' => 'xxs', 'tshirtLabel' => 'XXS'],
-        1 => ['label' => 'XS', 'size' => 'xs', 'tshirtLabel' => 'XS'],
-        2 => ['label' => 'S', 'size' => 'sm', 'tshirtLabel' => 'S'],
-        3 => ['label' => 'M', 'size' => 'md', 'tshirtLabel' => 'M'],
-        5 => ['label' => 'L', 'size' => 'lg', 'tshirtLabel' => 'L'],
-        8 => ['label' => 'XL', 'size' => 'xl', 'tshirtLabel' => 'XL'],
-        13 => ['label' => 'XXL', 'size' => 'xxl', 'tshirtLabel' => 'XXL'],
+        0.5 => ['label' => '30 phút', 'size' => 'xxs', 'tshirtLabel' => '30m'],
+        1 => ['label' => '1 tiếng', 'size' => 'xs', 'tshirtLabel' => '1h'],
+        2 => ['label' => '2 tiếng', 'size' => 'sm', 'tshirtLabel' => '2h'],
+        4 => ['label' => '4 tiếng', 'size' => 'md', 'tshirtLabel' => '4h'],
+        8 => ['label' => '1 ngày', 'size' => 'lg', 'tshirtLabel' => '1d'],
+        12 => ['label' => '1.5 ngày', 'size' => 'xl', 'tshirtLabel' => '1.5d'],
+        16 => ['label' => '2 ngày', 'size' => 'xxl', 'tshirtLabel' => '2d'],
     ];
 
     /**

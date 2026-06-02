@@ -85,6 +85,8 @@ class Install
         // 30503 (zp_device_tokens) intentionally skipped — superseded by
         // 30504 which puts push columns on zp_access_tokens instead.
         30504,
+        30505,
+        30506,
     ];
 
     /**
@@ -2649,6 +2651,68 @@ class Install
             Log::error('Migration 30504: '.$e->getMessage());
 
             return ['Migration 30504 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /**
+     * Remap legacy Fibonacci story-point effort values to the new
+     * hour-based scale so existing tickets line up with the time
+     * labels in Tickets repository $efforts:
+     *   3  -> 4  (4 tiếng)
+     *   5  -> 8  (1 ngày)
+     *   8  -> 12 (1.5 ngày)
+     *   13 -> 16 (2 ngày)
+     * Values 0.5, 1 and 2 are unchanged (their hour meaning already
+     * matches). Updated in descending order so the chained mappings
+     * (5->8 after 8->12) cannot collide.
+     *
+     * @return bool|array True on success, array of error messages on failure.
+     */
+    public function update_sql_30505(): bool|array
+    {
+        try {
+            \Illuminate\Support\Facades\DB::table('zp_tickets')->where('storypoints', 13)->update(['storypoints' => 16]);
+            \Illuminate\Support\Facades\DB::table('zp_tickets')->where('storypoints', 8)->update(['storypoints' => 12]);
+            \Illuminate\Support\Facades\DB::table('zp_tickets')->where('storypoints', 5)->update(['storypoints' => 8]);
+            \Illuminate\Support\Facades\DB::table('zp_tickets')->where('storypoints', 3)->update(['storypoints' => 4]);
+        } catch (\Exception $e) {
+            Log::error('Migration 30505: '.$e->getMessage());
+
+            return ['Migration 30505 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /**
+     * Create the zp_whiteboards table backing the per-project Excalidraw
+     * whiteboards feature (Think → Whiteboards). The `scene` column stores
+     * the serialized Excalidraw scene (elements + appState + embedded files).
+     *
+     * @return bool|array True on success, array of error messages on failure.
+     */
+    public function update_sql_30506(): bool|array
+    {
+        try {
+            if (! Schema::hasTable('zp_whiteboards')) {
+                Schema::create('zp_whiteboards', function (Blueprint $table) {
+                    $table->id();
+                    $table->string('title', 255)->nullable();
+                    $table->integer('projectId')->nullable();
+                    $table->integer('author')->nullable();
+                    $table->longText('scene')->nullable();
+                    $table->dateTime('created')->nullable();
+                    $table->dateTime('modified')->nullable();
+
+                    $table->index(['projectId'], 'idx_whiteboards_projectId');
+                });
+            }
+        } catch (\Exception $e) {
+            Log::error('Migration 30506: '.$e->getMessage());
+
+            return ['Migration 30506 failed: '.$e->getMessage()];
         }
 
         return true;

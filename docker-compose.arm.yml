@@ -1,0 +1,18 @@
+# =====================================================================
+# Override để TEST LOCAL trên máy Mac ARM64 (Apple Silicon).
+# Chỉ thay đổi cách build service `leantime`: dùng Dockerfile.arm + tag
+# image riêng + ép platform arm64. Mọi env/ports/volumes kế thừa từ
+# docker-compose.yml.
+#
+# Chạy:
+#   docker compose -f docker-compose.yml -f docker-compose.arm.yml up -d --build
+#
+# Deploy server Intel vẫn dùng docker-compose.yml (Dockerfile.local) như cũ.
+# =====================================================================
+services:
+  leantime:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile.arm
+    image: leantime-custom:arm
+    platform: linux/arm64

@@ -90,7 +90,8 @@ leantime.snippets = (function () {
 
     var toggleFont = function (font) {
 
-        jQuery("#fontStyleSetter").html(":root { --primary-font-family: '"+font+"', 'Helvetica Neue', Helvetica, sans-serif; }")
+        // Font is forced to Be Vietnam Pro across the whole app, ignore user selection.
+        jQuery("#fontStyleSetter").html(":root { --primary-font-family: 'Be Vietnam Pro', 'Helvetica Neue', Helvetica, sans-serif; }")
 
 
     };

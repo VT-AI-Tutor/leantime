@@ -659,13 +659,13 @@ leantime.ticketsController = (function () {
     var initEffortDropdown = function () {
 
         var storyPointLabels = {
-            '0.5': '< 2min',
-            '1': 'XS',
-            '2': 'S',
-            '3': "M",
-            '5': "L",
-            '8' : "XL",
-            '13': "XXL"
+            '0.5': '30 phút',
+            '1': '1 tiếng',
+            '2': '2 tiếng',
+            '4': '4 tiếng',
+            '8': '1 ngày',
+            '12': '1.5 ngày',
+            '16': '2 ngày'
         };
 
         jQuery(".effortDropdown .dropdown-menu a").unbind().on("click", function () {
@@ -1409,7 +1409,7 @@ leantime.ticketsController = (function () {
 
                             } else if (groupBy === 'storypoints') {
                                 // Update effort dropdown on card
-                                var storyPointLabels = {'0.5': '< 2min', '1': 'XS', '2': 'S', '3': 'M', '5': 'L', '8': 'XL', '13': 'XXL'};
+                                var storyPointLabels = {'0.5': '30 phút', '1': '1 tiếng', '2': '2 tiếng', '4': '4 tiếng', '8': '1 ngày', '12': '1.5 ngày', '16': '2 ngày'};
                                 var $effortDropdown = jQuery('#effortDropdownMenuLink' + ticketId);
                                 if ($effortDropdown.length) {
                                     $effortDropdown.find('span.text').text(storyPointLabels[newGroupValue] || newGroupValue);

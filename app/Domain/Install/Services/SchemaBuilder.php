@@ -58,6 +58,7 @@ class SchemaBuilder
         $this->createJobsTable();
         $this->createRecurringPatternsTable();
         $this->createWorkStructureTables();
+        $this->createWhiteboardsTable();
     }
 
     /**
@@ -854,6 +855,26 @@ class SchemaBuilder
             $table->tinyInteger('enabled')->default(1);
 
             $table->index(['entityId'], 'idx_recurring_patterns_entityId');
+        });
+    }
+
+    /**
+     * Create the whiteboards table: per-project Excalidraw whiteboards. The
+     * `scene` column stores the serialized Excalidraw scene (elements +
+     * appState + embedded files) as a JSON blob.
+     */
+    private function createWhiteboardsTable(): void
+    {
+        Schema::create('zp_whiteboards', function (Blueprint $table) {
+            $table->id();
+            $table->string('title', 255)->nullable();
+            $table->integer('projectId')->nullable();
+            $table->integer('author')->nullable();
+            $table->longText('scene')->nullable();
+            $table->dateTime('created')->nullable();
+            $table->dateTime('modified')->nullable();
+
+            $table->index(['projectId'], 'idx_whiteboards_projectId');
         });
     }
 

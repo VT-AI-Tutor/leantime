@@ -183,6 +183,8 @@ class EditCanvasItem extends Controller
                         'author' => session('userdata.id'),
                         'title' => $params['title'],
                         'description' => $params['description'] ?? '',
+                        'assumptions' => $params['assumptions'] ?? '',
+                        'data1' => $params['checklist'] ?? '',
                         'status' => $params['status'] ?? '',
                         'relates' => '',
                         'startValue' => $params['startValue'],
@@ -202,6 +204,10 @@ class EditCanvasItem extends Controller
                     ];
 
                     if (isset($params['newMilestone']) && $params['newMilestone'] != '') {
+                        // The goal's own free-text fields must not bleed into the
+                        // milestone created as a side effect ($canvasItem already
+                        // captured them above).
+                        unset($params['description'], $params['checklist']);
                         $params['headline'] = $params['newMilestone'];
                         $params['tags'] = '#ccc';
                         $params['editFrom'] = dtHelper()->userNow()->formatDateForUser();
@@ -263,6 +269,8 @@ class EditCanvasItem extends Controller
                         'author' => session('userdata.id'),
                         'title' => $params['title'],
                         'description' => $params['description'] ?? '',
+                        'assumptions' => $params['assumptions'] ?? '',
+                        'data1' => $params['checklist'] ?? '',
                         'status' => $params['status'] ?? '',
                         'relates' => '',
                         'startValue' => $params['startValue'],
