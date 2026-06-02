@@ -47,12 +47,17 @@ class DelCanvas
      */
     public function get(?string $id = null): Response
     {
+        // Resolve the optional {id} route segment by name; otherwise Laravel binds
+        // the preceding {canvasSlug} value into $id positionally.
+        $id = $this->request->route('id');
+
         if ($this->template === null) {
             return $this->tpl->displayPartial('errors.error404');
         }
 
         Auth::authOrRedirect([Roles::$owner, Roles::$admin, Roles::$manager, Roles::$editor]);
 
+        $this->tpl->assign('id', $id);
         $this->tpl->assign('canvasSlug', $this->canvasSlug);
 
         return $this->tpl->displayPartial('blueprints.delCanvas');
@@ -65,6 +70,9 @@ class DelCanvas
      */
     public function post(?string $id = null): Response
     {
+        // See get(): resolve {id} by name so it is not shadowed by {canvasSlug}.
+        $id = $this->request->route('id');
+
         if ($this->template === null) {
             return $this->tpl->displayPartial('errors.error404');
         }

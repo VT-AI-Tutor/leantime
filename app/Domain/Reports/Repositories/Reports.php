@@ -146,6 +146,74 @@ class Reports
         return $values;
     }
 
+    /**
+     * Returns every timesheet entry logged against a project within a date range.
+     *
+     * Used to build the monthly team-performance view: entries are bucketed per
+     * user and per (timezone-local) day in the service layer. workDate is stored
+     * in UTC, so callers pass UTC range bounds derived from the user's local month.
+     *
+     * @param  int  $projectId  Project to scope to.
+     * @param  string  $startUtc  Inclusive start (UTC, 'Y-m-d H:i:s').
+     * @param  string  $endUtc  Exclusive end (UTC, 'Y-m-d H:i:s').
+     * @return array<int, array<string, mixed>> Raw entries {userId, ticketId, firstname, lastname, username, workDate, hours}.
+     */
+    public function getTimesheetEntriesForMonth(int $projectId, string $startUtc, string $endUtc): array
+    {
+        $results = $this->db->table('zp_timesheets')
+            ->leftJoin('zp_tickets', 'zp_timesheets.ticketId', '=', 'zp_tickets.id')
+            ->leftJoin('zp_user', 'zp_timesheets.userId', '=', 'zp_user.id')
+            ->selectRaw('zp_timesheets.userId AS '.$this->dbHelper->wrapColumn('userId'))
+            ->selectRaw('zp_timesheets.ticketId AS '.$this->dbHelper->wrapColumn('ticketId'))
+            ->selectRaw('zp_timesheets.workDate AS workDate')
+            ->selectRaw('zp_timesheets.hours AS hours')
+            ->selectRaw('zp_user.firstname AS firstname')
+            ->selectRaw('zp_user.lastname AS lastname')
+            ->selectRaw('zp_user.username AS username')
+            ->where('zp_tickets.projectId', $projectId)
+            ->where('zp_timesheets.workDate', '>=', $startUtc)
+            ->where('zp_timesheets.workDate', '<', $endUtc)
+            ->get();
+
+        return $results->map(fn ($row) => (array) $row)->toArray();
+    }
+
+    /**
+     * Counts tasks completed within a date range, grouped by assignee.
+     *
+     * A task counts as "completed in the period" when it currently sits in a
+     * DONE status and was last modified within the range. Subtasks and
+     * milestones are excluded. modified is stored in UTC.
+     *
+     * @param  int  $projectId  Project to scope to.
+     * @param  string  $startUtc  Inclusive start (UTC, 'Y-m-d H:i:s').
+     * @param  string  $endUtc  Exclusive end (UTC, 'Y-m-d H:i:s').
+     * @return array<int, array<string, mixed>> Rows {userId, done_count, points_done}.
+     *
+     * @throws BindingResolutionException
+     */
+    public function getDoneTaskStatsForMonth(int $projectId, string $startUtc, string $endUtc): array
+    {
+        $ticketRepo = app()->make(TicketRepository::class);
+        $statusGroups = $this->dbHelper->parseStatusGroups($ticketRepo->getStatusListGroupedByType($projectId));
+        $doneStatus = implode(',', $statusGroups['DONE'] ?: [0]);
+
+        $results = $this->db->table('zp_tickets')
+            ->selectRaw('editorId AS '.$this->dbHelper->wrapColumn('userId'))
+            ->selectRaw('COUNT(DISTINCT id) AS done_count')
+            ->selectRaw('SUM(storypoints) AS points_done')
+            ->where('projectId', $projectId)
+            ->whereRaw("status IN ({$doneStatus})")
+            ->where('type', '<>', 'subtask')
+            ->where('type', '<>', 'milestone')
+            ->where('modified', '>=', $startUtc)
+            ->where('modified', '<', $endUtc)
+            ->groupBy('editorId')
+            ->get();
+
+        return $results->map(fn ($row) => (array) $row)->toArray();
+    }
+
     public function checkLastReportEntries(int $projectId): false|array
     {
         $results = $this->db->table('zp_stats')

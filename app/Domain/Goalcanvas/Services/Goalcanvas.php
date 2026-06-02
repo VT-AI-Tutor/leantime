@@ -32,6 +32,8 @@ class Goalcanvas
 
         if ($goals) {
             foreach ($goals as &$goal) {
+                $goal['milestones'] = $this->goalRepository->getMilestonesForGoal($goal['id']);
+
                 $progressValue = 0;
                 $goal['goalProgress'] = 0;
                 $total = $goal['endValue'] - $goal['startValue'];
@@ -164,9 +166,48 @@ class Goalcanvas
     public function getGoalsByMilestone($milestoneId): array
     {
 
-        $goals = $this->goalRepository->getGoalsByMilestone($milestoneId);
+        $goals = $this->goalRepository->getGoalsByMilestone((int) $milestoneId);
 
-        return $goals;
+        return $goals ?: [];
+    }
+
+    /**
+     * getMilestonesForGoal - Returns the milestones linked to a goal.
+     *
+     * @param  int  $canvasItemId  Goal canvas item identifier
+     * @return array<int, array<string, mixed>>
+     *
+     * @api
+     */
+    public function getMilestonesForGoal(int $canvasItemId): array
+    {
+        return $this->goalRepository->getMilestonesForGoal($canvasItemId);
+    }
+
+    /**
+     * addGoalMilestone - Links a milestone to a goal (idempotent).
+     *
+     * @param  int  $canvasItemId  Goal canvas item identifier
+     * @param  int  $milestoneId  Milestone (ticket) identifier
+     *
+     * @api
+     */
+    public function addGoalMilestone(int $canvasItemId, int $milestoneId): void
+    {
+        $this->goalRepository->addGoalMilestone($canvasItemId, $milestoneId);
+    }
+
+    /**
+     * removeGoalMilestone - Removes a single goal↔milestone link.
+     *
+     * @param  int  $canvasItemId  Goal canvas item identifier
+     * @param  int  $milestoneId  Milestone (ticket) identifier
+     *
+     * @api
+     */
+    public function removeGoalMilestone(int $canvasItemId, int $milestoneId): void
+    {
+        $this->goalRepository->removeGoalMilestone($canvasItemId, $milestoneId);
     }
 
     public function updateGoalboard($values)

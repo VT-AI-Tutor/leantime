@@ -57,6 +57,10 @@ class BoardDialog
      */
     public function get(?string $id = null): Response
     {
+        // Resolve the optional {id} route segment by name; otherwise Laravel binds
+        // the preceding {canvasSlug} value into $id positionally.
+        $id = $this->request->route('id');
+
         if ($this->template === null) {
             return $this->tpl->displayPartial('errors.error404');
         }
@@ -81,6 +85,9 @@ class BoardDialog
      */
     public function post(?string $id = null): Response
     {
+        // See get(): resolve {id} by name so it is not shadowed by {canvasSlug}.
+        $id = $this->request->route('id');
+
         if ($this->template === null) {
             return $this->tpl->displayPartial('errors.error404');
         }

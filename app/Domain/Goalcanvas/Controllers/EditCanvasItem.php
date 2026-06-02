@@ -63,8 +63,8 @@ class EditCanvasItem extends Controller
             }
 
             // Delete milestone relationship
-            if (isset($params['removeMilestone'])) {
-                $this->canvasRepo->patchCanvasItem($params['id'], ['milestoneId' => '']);
+            if (isset($params['removeMilestone']) && is_numeric($params['removeMilestone'])) {
+                $this->goalService->removeGoalMilestone((int) $params['id'], (int) $params['removeMilestone']);
                 $this->tpl->setNotification($this->language->__('notifications.milestone_detached'), 'success');
             }
 
@@ -115,6 +115,11 @@ class EditCanvasItem extends Controller
 
         $allProjectMilestones = $this->ticketService->getAllMilestones(['sprint' => '', 'type' => 'milestone', 'currentProject' => session('currentProject')]);
         $this->tpl->assign('milestones', $allProjectMilestones);
+
+        $this->tpl->assign(
+            'linkedMilestones',
+            ! empty($canvasItem['id']) ? $this->goalService->getMilestonesForGoal((int) $canvasItem['id']) : []
+        );
 
         $this->tpl->assign('currentCanvas', $canvasItem['canvasId']);
         $this->tpl->assign('canvasItem', $canvasItem);
@@ -200,9 +205,13 @@ class EditCanvasItem extends Controller
                         'setting' => $params['setting'] ?? '',
                         'metricType' => $params['metricType'],
                         'assignedTo' => $params['assignedTo'] ?? '',
-                        'milestoneId' => $params['milestoneId'] ?? '',
                     ];
 
+                    $this->canvasRepo->editCanvasItem($canvasItem);
+
+                    // Link milestones (many-to-many via the junction table). A goal
+                    // can link to multiple milestones; each save adds the chosen
+                    // existing milestone(s) and/or a newly created one.
                     if (isset($params['newMilestone']) && $params['newMilestone'] != '') {
                         // The goal's own free-text fields must not bleed into the
                         // milestone created as a side effect ($canvasItem already
@@ -213,17 +222,24 @@ class EditCanvasItem extends Controller
                         $params['editFrom'] = dtHelper()->userNow()->formatDateForUser();
                         $params['editTo'] = dtHelper()->userNow()->addDays(7)->formatDateForUser();
                         $params['dependentMilestone'] = '';
-                        $id = $this->ticketService->quickAddMilestone($params);
+                        $newMilestoneId = $this->ticketService->quickAddMilestone($params);
 
-                        if ($id !== false) {
-                            $canvasItem['milestoneId'] = $id;
+                        if ($newMilestoneId !== false) {
+                            $this->goalService->addGoalMilestone((int) $params['itemId'], (int) $newMilestoneId);
                         }
                     }
-                    if (isset($params['existingMilestone']) && $params['existingMilestone'] != '') {
-                        $canvasItem['milestoneId'] = $params['existingMilestone'];
-                    }
 
-                    $this->canvasRepo->editCanvasItem($canvasItem);
+                    if (isset($params['existingMilestone'])) {
+                        $existingMilestones = is_array($params['existingMilestone'])
+                            ? $params['existingMilestone']
+                            : [$params['existingMilestone']];
+
+                        foreach ($existingMilestones as $existingMilestone) {
+                            if ($existingMilestone !== '' && is_numeric($existingMilestone)) {
+                                $this->goalService->addGoalMilestone((int) $params['itemId'], (int) $existingMilestone);
+                            }
+                        }
+                    }
 
                     $comments = $this->commentsRepo->getComments('goalcanvasitem', $params['itemId']);
                     $this->tpl->assign('numComments', $this->commentsRepo->countComments(

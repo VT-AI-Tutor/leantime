@@ -1,5 +1,6 @@
 @php
-    $id = isset($_GET['id']) ? filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT) : '';
+    // {id} arrives as a route path segment (assigned by the controller), not a query param.
+    $id = filter_var((string) ($id ?? ''), FILTER_SANITIZE_NUMBER_INT);
 @endphp
 
 <h4 class="widgettitle title-light">{!! __('subtitles.delete') !!}</h4>

@@ -19,7 +19,6 @@
             <input type="hidden" value="{{ $currentCanvas }}" name="canvasId">
             <input type="hidden" value="{{ $canvasItem['box'] }}" name="box" id="box">
             <input type="hidden" value="{{ $id }}" name="itemId" id="itemId">
-            <input type="hidden" name="milestoneId" value="{{ $canvasItem['milestoneId'] ?? '' }}">
             <input type="hidden" name="changeItem" value="1">
 
             <div class="row">
@@ -117,21 +116,37 @@
                     <input type="text" autocomplete="off" value="{{ format($canvasItem['endDate'])->date() }}" name="endDate" class="endDate"/>
 
                     @if ($id !== '')
+                        @php($linkedMilestones = $linkedMilestones ?? [])
+                        @php($linkedMilestoneIds = array_map(fn ($m) => (int) $m['id'], $linkedMilestones))
                         <br /><br />
                         <h4 class="widgettitle title-light"><span class="fa fa-link"></span> {{ __("headlines.linked_milestone") }} <i class="fa fa-question-circle-o helperTooltip" data-tippy-content="{{ __("tooltip.link_milestones_tooltip") }}"></i></h4>
 
-                        @if ($canvasItem['milestoneId'] == '')
+                        @foreach ($linkedMilestones as $linkedMilestone)
+                            <div hx-trigger="load"
+                                 hx-indicator=".htmx-indicator"
+                                 hx-get="{{ BASE_URL }}/hx/tickets/milestones/showCard?milestoneId={{ $linkedMilestone['id'] }}">
+                                <div class="htmx-indicator">
+                                    {{ __("label.loading_milestone") }}
+                                </div>
+                            </div>
+                            @if ($login::userIsAtLeast($roles::$editor))
+                                <a href="{{ BASE_URL }}/goalcanvas/editCanvasItem/{{ $id }}?removeMilestone={{ $linkedMilestone['id'] }}" class="goalCanvasModal delete formModal"><i class="fa fa-close"></i> {{ __("links.remove") }}</a>
+                            @endif
+                            <br />
+                        @endforeach
+
+                        @if ($login::userIsAtLeast($roles::$editor))
                             <center>
-                                <h4>{{ __("headlines.no_milestone_link") }}</h4>
+                                @if (count($linkedMilestones) == 0)
+                                    <h4>{{ __("headlines.no_milestone_link") }}</h4>
+                                @endif
                                 <div class="row" id="milestoneSelectors">
-                                    @if ($login::userIsAtLeast($roles::$editor))
-                                        <div class="col-md-12">
-                                            <a href="javascript:void(0);" onclick="leantime.goalCanvasController.toggleMilestoneSelectors('new');">{{ __("links.create_link_milestone") }}</a>
-                                            @if (count($milestones) > 0)
-                                                | <a href="javascript:void(0);" onclick="leantime.goalCanvasController.toggleMilestoneSelectors('existing');">{{ __("links.link_existing_milestone") }}</a>
-                                            @endif
-                                        </div>
-                                    @endif
+                                    <div class="col-md-12">
+                                        <a href="javascript:void(0);" onclick="leantime.goalCanvasController.toggleMilestoneSelectors('new');">{{ __("links.create_link_milestone") }}</a>
+                                        @if (count($milestones) > 0)
+                                            | <a href="javascript:void(0);" onclick="leantime.goalCanvasController.toggleMilestoneSelectors('existing');">{{ __("links.link_existing_milestone") }}</a>
+                                        @endif
+                                    </div>
                                 </div>
                                 <div class="row" id="newMilestone" style="display:none;">
                                     <div class="col-md-12">
@@ -148,9 +163,11 @@
                                         <select data-placeholder="{{ __("input.placeholders.filter_by_milestone") }}" name="existingMilestone" class="user-select">
                                             <option value=""></option>
                                             @foreach ($milestones as $milestoneRow)
-                                                <option value="{{ $milestoneRow->id }}" {{ isset($searchCriteria['milestone']) && ($searchCriteria['milestone'] == $milestoneRow->id) ? 'selected' : '' }}>
-                                                    {{ $milestoneRow->headline }}
-                                                </option>
+                                                @if (! in_array((int) $milestoneRow->id, $linkedMilestoneIds, true))
+                                                    <option value="{{ $milestoneRow->id }}">
+                                                        {{ $milestoneRow->headline }}
+                                                    </option>
+                                                @endif
                                             @endforeach
                                         </select>
                                         <input type="hidden" name="type" value="milestone" />
@@ -160,15 +177,6 @@
                                     </div>
                                 </div>
                             </center>
-                        @else
-                            <div hx-trigger="load"
-                                 hx-indicator=".htmx-indicator"
-                                 hx-get="{{ BASE_URL }}/hx/tickets/milestones/showCard?milestoneId={{ $canvasItem['milestoneId'] }}">
-                                <div class="htmx-indicator">
-                                    {{ __("label.loading_milestone") }}
-                                </div>
-                            </div>
-                            <a href="{{ BASE_URL }}/goalcanvas/editCanvasItem/{{ $id }}?removeMilestone={{ $canvasItem['milestoneId'] }}" class="goalCanvasModal delete formModal"><i class="fa fa-close"></i> {{ __("links.remove") }}</a>
                         @endif
                     @endif
                 </div>

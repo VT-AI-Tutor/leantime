@@ -127,7 +127,7 @@ class EditCanvasComment extends Controller
                         'itemId' => $params['itemId'],
                         'id' => $params['itemId'],
                         'canvasId' => $currentCanvasId,
-                        'milestoneId' => $params['milestoneId'],
+                        'milestoneId' => $params['milestoneId'] ?? '',
                         'dependentMilstone' => '',
                     ];
 
