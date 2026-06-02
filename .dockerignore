@@ -1,0 +1,16 @@
+.git
+.github
+node_modules
+vendor
+tests
+.dev
+target
+builddocs
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+config/.env
+docker-compose.yml
+**/*.log
+.DS_Store
