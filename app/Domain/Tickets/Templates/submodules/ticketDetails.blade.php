@@ -51,7 +51,7 @@
                             @foreach ($efforts as $effortKey => $effortValue)
                                 <option value="{{ $effortKey }}"
                                     @if ($effortKey == $ticket->storypoints) selected='selected' @endif
-                                >{{ $effortValue }}</option>
+                                >{{ $effortValue }} · {{ $effortKey }} {{ __('label.points') }}</option>
                             @endforeach
                         </select>
                     </div>
