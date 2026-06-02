@@ -67,6 +67,11 @@ class EditCanvasItem
      */
     public function get(?string $id = null): Response
     {
+        // The {id} route segment is optional. When it is absent Laravel resolves
+        // method arguments positionally and binds the preceding {canvasSlug} value
+        // into $id, so resolve the id explicitly by name instead.
+        $id = $this->request->route('id');
+
         $data = $this->request->getRequestParams();
         if ($id !== null) {
             $data['id'] = $id;
@@ -155,6 +160,10 @@ class EditCanvasItem
      */
     public function post(?string $id = null): Response
     {
+        // See get(): resolve the optional {id} route segment by name so it is not
+        // shadowed by the positionally-bound {canvasSlug} value.
+        $id = $this->request->route('id');
+
         $data = $this->request->getRequestParams();
         if ($id !== null) {
             $data['id'] = $id;

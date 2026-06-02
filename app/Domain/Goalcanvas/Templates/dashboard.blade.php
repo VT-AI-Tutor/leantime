@@ -272,14 +272,14 @@ foreach ($allCanvas as $canvasRow) {
                                                     </div>
                                                 </div>
 
-                                                @if ($row['milestoneHeadline'] != '')
+                                                @foreach ($row['milestones'] ?? [] as $linkedMilestone)
                                                     <br/>
-                                                    <div hx-trigger="load" hx-indicator=".htmx-indicator" hx-get="{{ BASE_URL }}/hx/tickets/milestones/showCard?milestoneId={{ $row['milestoneId'] }}">
+                                                    <div hx-trigger="load" hx-indicator=".htmx-indicator" hx-get="{{ BASE_URL }}/hx/tickets/milestones/showCard?milestoneId={{ $linkedMilestone['id'] }}">
                                                         <div class="htmx-indicator">
                                                             {{ __("label.loading_milestone") }}
                                                         </div>
                                                     </div>
-                                                @endif
+                                                @endforeach
                                             </div>
                                         </div>
                                     @endif

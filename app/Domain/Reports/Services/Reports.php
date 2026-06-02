@@ -2,6 +2,7 @@
 
 namespace Leantime\Domain\Reports\Services;
 
+use Carbon\CarbonImmutable;
 use DateTime;
 use DateTimeZone;
 use Exception;
@@ -207,6 +208,152 @@ class Reports
     public function getRealtimeReport($projectId, $sprintId): array|bool
     {
         return $this->reportRepository->runTicketReport($projectId, $sprintId);
+    }
+
+    /**
+     * Builds a per-team-member performance report for a project and a single month.
+     *
+     * Combines the project's assigned members with timesheet entries (hours and
+     * distinct tasks worked, bucketed per timezone-local day) and tasks completed
+     * in the month. Members with no activity are still included so the manager
+     * sees the full team. The result feeds both a team-comparison chart and a
+     * per-member daily drill-down on the reports page.
+     *
+     * @param  int  $projectId  Project to report on.
+     * @param  string  $startUtc  Inclusive month start (UTC, 'Y-m-d H:i:s').
+     * @param  string  $endUtc  Exclusive month end (UTC, 'Y-m-d H:i:s').
+     * @param  string  $timezone  User timezone used to bucket entries into local days.
+     * @param  int  $daysInMonth  Number of days in the selected month.
+     * @return array{members: array<int, array<string, mixed>>, teamDaily: array<int, float>, days: int}
+     *
+     * @throws BindingResolutionException
+     *
+     * @api
+     */
+    public function getTeamPerformanceReport(int $projectId, string $startUtc, string $endUtc, string $timezone, int $daysInMonth): array
+    {
+        $members = $this->projectRepository->getUsersAssignedToProject($projectId);
+        $members = is_array($members) ? $members : [];
+
+        $rows = [];
+        $workedTickets = [];
+
+        // Seed a row for every assigned member so 0-activity members still show.
+        foreach ($members as $member) {
+            $uid = (int) $member['id'];
+            $rows[$uid] = $this->emptyTeamRow(
+                $uid,
+                $this->memberName($member['firstname'] ?? '', $member['lastname'] ?? '', $member['username'] ?? '', $uid),
+                $daysInMonth
+            );
+            $workedTickets[$uid] = [];
+        }
+
+        // Timesheet entries -> hours, distinct tasks worked and per-local-day buckets.
+        foreach ($this->reportRepository->getTimesheetEntriesForMonth($projectId, $startUtc, $endUtc) as $entry) {
+            $uid = (int) ($entry['userId'] ?? 0);
+            if ($uid <= 0) {
+                continue;
+            }
+
+            if (! isset($rows[$uid])) {
+                $rows[$uid] = $this->emptyTeamRow(
+                    $uid,
+                    $this->memberName($entry['firstname'] ?? '', $entry['lastname'] ?? '', $entry['username'] ?? '', $uid),
+                    $daysInMonth
+                );
+                $workedTickets[$uid] = [];
+            }
+
+            $hours = (float) ($entry['hours'] ?? 0);
+            $rows[$uid]['hours'] += $hours;
+
+            if (! empty($entry['ticketId'])) {
+                $workedTickets[$uid][(int) $entry['ticketId']] = true;
+            }
+
+            if (! empty($entry['workDate'])) {
+                $localDay = (int) CarbonImmutable::parse($entry['workDate'], 'UTC')->setTimezone($timezone)->day;
+                if ($localDay >= 1 && $localDay <= $daysInMonth) {
+                    $rows[$uid]['daily'][$localDay - 1] += $hours;
+                }
+            }
+        }
+
+        // Tasks completed in the month, attributed to the assignee.
+        foreach ($this->reportRepository->getDoneTaskStatsForMonth($projectId, $startUtc, $endUtc) as $stat) {
+            $uid = (int) ($stat['userId'] ?? 0);
+            if ($uid <= 0 || ! isset($rows[$uid])) {
+                continue;
+            }
+            $rows[$uid]['tasksDone'] += (int) $stat['done_count'];
+            $rows[$uid]['pointsDone'] += (float) $stat['points_done'];
+        }
+
+        foreach ($rows as $uid => &$row) {
+            $row['tasksWorked'] = count($workedTickets[$uid] ?? []);
+            $row['hours'] = round($row['hours'], 2);
+            $row['daily'] = array_map(fn ($h) => round($h, 2), $row['daily']);
+        }
+        unset($row);
+
+        $result = array_values($rows);
+        usort($result, fn ($a, $b) => $b['hours'] <=> $a['hours']);
+
+        // Whole-team total per local day for the team drill-down chart.
+        $teamDaily = array_fill(0, $daysInMonth, 0.0);
+        foreach ($result as $row) {
+            foreach ($row['daily'] as $i => $h) {
+                $teamDaily[$i] += $h;
+            }
+        }
+        $teamDaily = array_map(fn ($h) => round($h, 2), $teamDaily);
+
+        return [
+            'members' => $result,
+            'teamDaily' => $teamDaily,
+            'days' => $daysInMonth,
+        ];
+    }
+
+    /**
+     * Returns a zeroed monthly team-performance row for a member.
+     *
+     * @param  int  $id  User id.
+     * @param  string  $name  Display name.
+     * @param  int  $daysInMonth  Number of day buckets to pre-fill with 0.
+     * @return array<string, mixed>
+     */
+    private function emptyTeamRow(int $id, string $name, int $daysInMonth): array
+    {
+        return [
+            'id' => $id,
+            'name' => $name,
+            'hours' => 0.0,
+            'tasksDone' => 0,
+            'tasksWorked' => 0,
+            'pointsDone' => 0.0,
+            'daily' => array_fill(0, $daysInMonth, 0.0),
+        ];
+    }
+
+    /**
+     * Resolves a human-readable member name with sensible fallbacks.
+     *
+     * @param  string  $firstname  First name (may be empty).
+     * @param  string  $lastname  Last name (may be empty).
+     * @param  string  $username  Username fallback (may be empty).
+     * @param  int  $id  User id, used as a last-resort label.
+     */
+    private function memberName(string $firstname, string $lastname, string $username, int $id): string
+    {
+        $name = trim($firstname.' '.$lastname);
+
+        if ($name !== '') {
+            return $name;
+        }
+
+        return $username !== '' ? $username : 'User '.$id;
     }
 
     /**

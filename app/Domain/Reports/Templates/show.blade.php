@@ -187,6 +187,88 @@
                 </div>
             </div>
         </div>
+
+        @if (\Leantime\Domain\Auth\Services\Auth::userIsAtLeast(\Leantime\Domain\Auth\Models\Roles::$admin) && ! empty($teamPerformance))
+            <div class="row" id="teamPerformanceContainer">
+                <div class="col-md-12">
+
+                    <div class="row" style="align-items:center;">
+                        <div class="col-md-6">
+                            <h5 class="subtitle" style="margin-bottom:0;">{!! __('subtitles.team_performance') !!}</h5>
+                        </div>
+                        <div class="col-md-6" style="text-align:right;">
+                            <div class="btn-group" role="group">
+                                <a href="{{ BASE_URL }}/reports/show?month={{ $teamPrevMonth }}" class="btn btn-sm btn-secondary" title="{{ __('links.previous') }}"><span class="fa fa-chevron-left"></span></a>
+                                <span class="btn btn-sm btn-secondary disabled" style="min-width:140px;">{{ $teamMonthLabel }}</span>
+                                @if ($teamNextMonth !== null)
+                                    <a href="{{ BASE_URL }}/reports/show?month={{ $teamNextMonth }}" class="btn btn-sm btn-secondary" title="{{ __('links.next') }}"><span class="fa fa-chevron-right"></span></a>
+                                @else
+                                    <span class="btn btn-sm btn-secondary disabled"><span class="fa fa-chevron-right"></span></span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <br />
+
+                    @if (empty($teamPerformance['members']))
+                        <div class="center"><br /><h4>{!! __('label.no_data_available') !!}</h4></div>
+                    @else
+                        <div class="row">
+                            {{-- Whole team: hours logged per member this month --}}
+                            <div class="col-md-6">
+                                <strong>{!! __('subtitles.team_hours_by_member') !!}</strong>
+                                <div style="width:100%; height:320px;">
+                                    <canvas id="teamHoursChart"></canvas>
+                                </div>
+                            </div>
+                            {{-- Per person drill-down: daily hours across the month --}}
+                            <div class="col-md-6">
+                                <div class="pull-right" style="max-width:220px;">
+                                    <select id="teamMemberSelect" class="mainSprintSelector">
+                                        <option value="team" selected="selected">{{ __('label.whole_team') }}</option>
+                                        @foreach ($teamPerformance['members'] as $member)
+                                            <option value="{{ $member['id'] }}">{{ $member['name'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <strong>{!! __('subtitles.daily_hours') !!}</strong>
+                                <div style="width:100%; height:320px;">
+                                    <canvas id="memberDailyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <br />
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>{!! __('label.name') !!}</th>
+                                    <th class="text-center">{!! __('label.logged_hours') !!}</th>
+                                    <th class="text-center">{!! __('label.tasks_done') !!}</th>
+                                    <th class="text-center">{!! __('label.tasks_worked') !!}</th>
+                                    <th class="text-center">{!! __('label.points_done') !!}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($teamPerformance['members'] as $member)
+                                    <tr>
+                                        <td>{{ $member['name'] }}</td>
+                                        <td class="text-center">{{ format($member['hours'])->decimal() }}</td>
+                                        <td class="text-center">{{ $member['tasksDone'] }}</td>
+                                        <td class="text-center">{{ $member['tasksWorked'] }}</td>
+                                        <td class="text-center">{{ format($member['pointsDone'])->decimal() }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
+                    <br /><br />
+                </div>
+            </div>
+        @endif
+
     </div>
 </div>
 
@@ -270,6 +352,39 @@
            leantime.dashboardController.initBacklogChartButtonClick('EffortChartButtonBacklog', statusBurnupEffort, '{!! __('label.effort') !!}', backlogBurndown);
            leantime.dashboardController.initBacklogChartButtonClick('NumChartButtonBacklog', statusBurnupNum, '{!! __('label.num_tickets') !!}', backlogBurndown);
 
+       @endif
+
+       @if (\Leantime\Domain\Auth\Services\Auth::userIsAtLeast(\Leantime\Domain\Auth\Models\Roles::$admin) && ! empty($teamPerformance['members']))
+           @php
+               $teamNames = array_map(fn ($m) => $m['name'], $teamPerformance['members']);
+               $teamHours = array_map(fn ($m) => $m['hours'], $teamPerformance['members']);
+               $dayLabels = range(1, $teamPerformance['days']);
+               $membersDaily = [];
+               foreach ($teamPerformance['members'] as $m) {
+                   $membersDaily[(string) $m['id']] = ['name' => $m['name'], 'daily' => $m['daily']];
+               }
+           @endphp
+
+           // Whole-team comparison: hours logged per member this month.
+           leantime.reportsController.initTeamHoursChart('teamHoursChart', @json($teamNames), @json($teamHours));
+
+           // Per-member drill-down: daily logged hours, switchable via the dropdown.
+           var ltTeamDaily = @json($teamPerformance['teamDaily']);
+           var ltMembersDaily = @json($membersDaily);
+           var ltDayLabels = @json($dayLabels);
+
+           var memberDailyChart = leantime.reportsController.initMemberDailyChart(
+               'memberDailyChart', ltDayLabels, ltTeamDaily, '{!! __('label.whole_team') !!}'
+           );
+
+           jQuery('#teamMemberSelect').on('change', function () {
+               var val = jQuery(this).val();
+               if (val === 'team') {
+                   leantime.reportsController.updateMemberDailyChart(memberDailyChart, ltTeamDaily, '{!! __('label.whole_team') !!}');
+               } else if (ltMembersDaily[val]) {
+                   leantime.reportsController.updateMemberDailyChart(memberDailyChart, ltMembersDaily[val].daily, ltMembersDaily[val].name);
+               }
+           });
        @endif
 
 

@@ -297,53 +297,129 @@ class Goalcanvas extends Blueprints
     }
 
     /**
-     * Gets all goals related to a milestone
+     * getGoalsByMilestone - Gets all goals linked to a given milestone.
+     *
+     * Reads from the zp_canvas_item_milestones junction table so it reflects
+     * the full many-to-many set of goal↔milestone links.
+     *
+     * @param  int  $milestoneId  Milestone (ticket) identifier
+     * @return false|array<int, array<string, mixed>>
      */
     public function getGoalsByMilestone(int $milestoneId): false|array
     {
         $results = $this->dbConnection->table('zp_canvas_items')
             ->select(
-                'id',
-                'description',
-                'title',
-                'assumptions',
-                'data',
-                'conclusion',
-                'box',
-                'author',
-                'created',
-                'modified',
-                'canvasId',
-                'sortindex',
-                'status',
-                'relates',
-                'milestoneId',
-                'kpi',
-                'data1',
-                'data2',
-                'data3',
-                'data4',
-                'data5',
-                'startDate',
-                'endDate',
-                'setting',
-                'metricType',
-                'startValue',
-                'currentValue',
-                'endValue',
-                'impact',
-                'effort',
-                'probability',
-                'action',
-                'assignedTo',
-                'parent',
-                'tags'
+                'zp_canvas_items.id',
+                'zp_canvas_items.description',
+                'zp_canvas_items.title',
+                'zp_canvas_items.assumptions',
+                'zp_canvas_items.data',
+                'zp_canvas_items.conclusion',
+                'zp_canvas_items.box',
+                'zp_canvas_items.author',
+                'zp_canvas_items.created',
+                'zp_canvas_items.modified',
+                'zp_canvas_items.canvasId',
+                'zp_canvas_items.sortindex',
+                'zp_canvas_items.status',
+                'zp_canvas_items.relates',
+                'zp_canvas_items.kpi',
+                'zp_canvas_items.data1',
+                'zp_canvas_items.data2',
+                'zp_canvas_items.data3',
+                'zp_canvas_items.data4',
+                'zp_canvas_items.data5',
+                'zp_canvas_items.startDate',
+                'zp_canvas_items.endDate',
+                'zp_canvas_items.setting',
+                'zp_canvas_items.metricType',
+                'zp_canvas_items.startValue',
+                'zp_canvas_items.currentValue',
+                'zp_canvas_items.endValue',
+                'zp_canvas_items.impact',
+                'zp_canvas_items.effort',
+                'zp_canvas_items.probability',
+                'zp_canvas_items.action',
+                'zp_canvas_items.assignedTo',
+                'zp_canvas_items.parent',
+                'zp_canvas_items.tags'
             )
-            ->where('box', 'goal')
-            ->where('milestoneId', (string) $milestoneId)
+            ->join('zp_canvas_item_milestones', 'zp_canvas_item_milestones.canvasItemId', '=', 'zp_canvas_items.id')
+            ->where('zp_canvas_items.box', 'goal')
+            ->where('zp_canvas_item_milestones.milestoneId', $milestoneId)
             ->get();
 
         return array_map(fn ($item) => (array) $item, $results->toArray());
+    }
+
+    /**
+     * getMilestonesForGoal - Returns the milestones linked to a goal.
+     *
+     * Inner-joins zp_tickets so deleted milestones automatically drop out of
+     * the result (orphan junction rows are harmless).
+     *
+     * @param  int  $canvasItemId  Goal canvas item identifier
+     * @return array<int, array<string, mixed>>
+     */
+    public function getMilestonesForGoal(int $canvasItemId): array
+    {
+        $results = $this->dbConnection->table('zp_canvas_item_milestones')
+            ->select(
+                'milestone.id as id',
+                'milestone.headline as headline',
+                'milestone.editTo as editTo',
+                'milestone.tags as tags'
+            )
+            ->join('zp_tickets as milestone', 'milestone.id', '=', 'zp_canvas_item_milestones.milestoneId')
+            ->where('zp_canvas_item_milestones.canvasItemId', $canvasItemId)
+            ->orderBy('milestone.editTo')
+            ->get();
+
+        return array_map(fn ($item) => (array) $item, $results->toArray());
+    }
+
+    /**
+     * addGoalMilestone - Links a milestone to a goal. Idempotent (duplicates
+     * are ignored via the unique constraint).
+     *
+     * @param  int  $canvasItemId  Goal canvas item identifier
+     * @param  int  $milestoneId  Milestone (ticket) identifier
+     */
+    public function addGoalMilestone(int $canvasItemId, int $milestoneId): void
+    {
+        $this->dbConnection->table('zp_canvas_item_milestones')->insertOrIgnore([
+            'canvasItemId' => $canvasItemId,
+            'milestoneId' => $milestoneId,
+        ]);
+    }
+
+    /**
+     * removeGoalMilestone - Removes a single goal↔milestone link.
+     *
+     * @param  int  $canvasItemId  Goal canvas item identifier
+     * @param  int  $milestoneId  Milestone (ticket) identifier
+     */
+    public function removeGoalMilestone(int $canvasItemId, int $milestoneId): void
+    {
+        $this->dbConnection->table('zp_canvas_item_milestones')
+            ->where('canvasItemId', $canvasItemId)
+            ->where('milestoneId', $milestoneId)
+            ->delete();
+    }
+
+    /**
+     * delCanvasItem - Deletes a goal canvas item and cleans up its milestone
+     * links before delegating to the base implementation.
+     *
+     * @param  int  $id  Canvas item identifier
+     */
+    public function delCanvasItem(int $id): void
+    {
+        $this->dbConnection->table('zp_canvas_item_milestones')
+            ->where('canvasItemId', $id)
+            ->delete();
+
+        parent::delCanvasItem($id);
     }
 
     /**

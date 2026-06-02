@@ -51,6 +51,10 @@ class Export
      */
     public function get(?string $id = null): Response
     {
+        // Resolve the optional {id} route segment by name; otherwise Laravel binds
+        // the preceding {canvasSlug} value into $id positionally.
+        $id = $this->request->route('id');
+
         if ($this->template === null) {
             return new Response('Unknown canvas type', 404);
         }

@@ -87,6 +87,7 @@ class Install
         30504,
         30505,
         30506,
+        30507,
     ];
 
     /**
@@ -448,6 +449,15 @@ class Install
                     KEY `idx_canvas_items_box_milestoneId` (`box`, `milestoneId`),
                     KEY `idx_canvas_items_box_status_author` (`box`, `status`, `author`),
                     KEY `idx_canvas_items_parent_title` (`parent`, `title`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE `zp_canvas_item_milestones` (
+                    `id` int(11) NOT NULL AUTO_INCREMENT,
+                    `canvasItemId` int(11) NOT NULL,
+                    `milestoneId` int(11) NOT NULL,
+                    PRIMARY KEY (`id`),
+                    UNIQUE KEY `uniq_canvasitem_milestone` (`canvasItemId`, `milestoneId`),
+                    KEY `idx_canvas_item_milestones_milestoneId` (`milestoneId`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
                 CREATE TABLE `zp_approvals` (
@@ -2713,6 +2723,57 @@ class Install
             Log::error('Migration 30506: '.$e->getMessage());
 
             return ['Migration 30506 failed: '.$e->getMessage()];
+        }
+
+        return true;
+    }
+
+    /**
+     * Create the zp_canvas_item_milestones junction table backing the
+     * many-to-many link between goals (zp_canvas_items) and milestones
+     * (zp_tickets). Existing single links stored in zp_canvas_items.milestoneId
+     * are backfilled so current goal→milestone relationships survive. The
+     * legacy milestoneId column is left in place (additive migration).
+     *
+     * @return bool|array True on success, array of error messages on failure.
+     */
+    public function update_sql_30507(): bool|array
+    {
+        try {
+            if (! Schema::hasTable('zp_canvas_item_milestones')) {
+                Schema::create('zp_canvas_item_milestones', function (Blueprint $table) {
+                    $table->id();
+                    $table->integer('canvasItemId');
+                    $table->integer('milestoneId');
+
+                    $table->unique(['canvasItemId', 'milestoneId'], 'uniq_canvasitem_milestone');
+                    $table->index(['milestoneId'], 'idx_canvas_item_milestones_milestoneId');
+                });
+
+                // Backfill existing single milestone links from the legacy column.
+                $legacyLinks = \Illuminate\Support\Facades\DB::table('zp_canvas_items')
+                    ->select('id', 'milestoneId')
+                    ->where('box', 'goal')
+                    ->whereNotNull('milestoneId')
+                    ->where('milestoneId', '<>', '')
+                    ->where('milestoneId', '<>', '0')
+                    ->get();
+
+                foreach ($legacyLinks as $link) {
+                    if (! is_numeric($link->milestoneId)) {
+                        continue;
+                    }
+
+                    \Illuminate\Support\Facades\DB::table('zp_canvas_item_milestones')->insertOrIgnore([
+                        'canvasItemId' => (int) $link->id,
+                        'milestoneId' => (int) $link->milestoneId,
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Migration 30507: '.$e->getMessage());
+
+            return ['Migration 30507 failed: '.$e->getMessage()];
         }
 
         return true;

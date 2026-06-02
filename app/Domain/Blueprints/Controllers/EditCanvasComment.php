@@ -71,6 +71,10 @@ class EditCanvasComment
      */
     public function get(?string $id = null): Response
     {
+        // Resolve the optional {id} route segment by name; otherwise Laravel binds
+        // the preceding {canvasSlug} value into $id positionally.
+        $id = $this->request->route('id');
+
         $data = $this->request->getRequestParams();
         if ($id !== null) {
             $data['id'] = $id;
@@ -146,6 +150,9 @@ class EditCanvasComment
      */
     public function post(?string $id = null): Response
     {
+        // See get(): resolve {id} by name so it is not shadowed by {canvasSlug}.
+        $id = $this->request->route('id');
+
         $data = $this->request->getRequestParams();
         if ($id !== null) {
             $data['id'] = $id;
