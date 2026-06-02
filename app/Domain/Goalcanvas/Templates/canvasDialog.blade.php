@@ -27,6 +27,12 @@
                     <label>{{ __('label.what_is_your_goal') }}</label>
                     <input type="text" name="title" value="{{ $canvasItem['title'] }}" style="width:100%"><br>
 
+                    <label>{{ __('label.description') }}</label>
+                    <textarea name="assumptions" class="tiptapSimple" style="width:100%">{!! ($canvasItem['assumptions'] ?? '') !== '' ? htmlentities($canvasItem['assumptions']) : '' !!}</textarea><br>
+
+                    <x-global::checklist name="checklist" :items="$canvasItem['data1'] ?? ''" />
+                    <br>
+
                     @if (!empty($relatesLabels))
                         <label>{{ __('label.relates') }}</label>
                         <select name="relates" style="width: 50%" id="relatesCanvas">
@@ -225,6 +231,10 @@
 
             if (window.leantime && window.leantime.tiptapController) {
                 leantime.tiptapController.initSimpleEditor();
+            }
+
+            if (window.leantime && window.leantime.checklistController) {
+                leantime.checklistController.init();
             }
 
             @if (!$login::userIsAtLeast($roles::$editor))

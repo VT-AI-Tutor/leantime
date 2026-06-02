@@ -93,7 +93,7 @@
 
 <style id="fontStyleSetter">
     :root {
-        --primary-font-family: '{{{ $themeFont }}}', 'Helvetica Neue', Helvetica, sans-serif;
+        --primary-font-family: 'Be Vietnam Pro', 'Helvetica Neue', Helvetica, sans-serif;
     }
 </style>
 

@@ -62,6 +62,7 @@ getFilesRecursive('app/Domain', '.js').forEach(file => {
         "./public/assets/js/app/core/datePickers.js",
         "./public/assets/js/app/core/dateHelper.js",
         "./public/assets/js/app/core/accessibility.js",
+        "./public/assets/js/app/core/checklist.js",
 
         ...glob.sync("./app/Domain/**/*.js").map(f => `./${f}`)
     ], `public/dist/js/compiled-app.${version}.min.js`)

@@ -41,12 +41,12 @@
                 <a href="javascript:void(0)" class="dropdown-toggle btn btn-transparent" data-toggle="dropdown"><i class="fa-solid fa-ellipsis-v"></i></a>
                 <ul class="dropdown-menu editCanvasDropdown">
                     @if($login::userIsAtLeast($roles::$editor))
-                        <li><a href="#/blueprints/{{ $canvasSlug }}/boardDialog/{{ $currentCanvas }}" class="editCanvasLink ">{!! __('links.icon.edit') !!}</a></li>
+                        <li><a href="javascript:void(0)" onclick="leantime.blueprintsController.openModalManually('{{ BASE_URL }}/blueprints/{{ $canvasSlug }}/boardDialog/{{ $currentCanvas }}')">{!! __('links.icon.edit') !!}</a></li>
                     @endif
                     <li><a href="{{ BASE_URL }}/blueprints/{{ $canvasSlug }}/export/{{ $currentCanvas }}">{!! __('links.icon.export') !!}</a></li>
                     <li><a href="javascript:window.print();">{!! __('links.icon.print') !!}</a></li>
                     @if($login::userIsAtLeast($roles::$editor))
-                        <li><a href="#/blueprints/{{ $canvasSlug }}/delCanvas/{{ $currentCanvas }}" class="delete">{!! __('links.icon.delete') !!}</a></li>
+                        <li><a href="javascript:void(0)" onclick="leantime.blueprintsController.openModalManually('{{ BASE_URL }}/blueprints/{{ $canvasSlug }}/delCanvas/{{ $currentCanvas }}')" class="delete">{!! __('links.icon.delete') !!}</a></li>
                     @endif
                 </ul>
             </span>
@@ -60,7 +60,7 @@
 
                     <ul class="dropdown-menu canvasSelector">
                         @if($login::userIsAtLeast($roles::$editor))
-                            <li><a href="#/blueprints/{{ $canvasSlug }}/boardDialog">{!! __('links.icon.create_new_board') !!}</a></li>
+                            <li><a href="javascript:void(0)" onclick="leantime.blueprintsController.openModalManually('{{ BASE_URL }}/blueprints/{{ $canvasSlug }}/boardDialog')">{!! __('links.icon.create_new_board') !!}</a></li>
                         @endif
                         <li class="border"></li>
                         @foreach($allCanvas as $canvasRow)
@@ -82,7 +82,8 @@
             <div class="col-md-3">
 
                 @if($login::userIsAtLeast($roles::$editor) && count($canvasTypes) == 1 && count($allCanvas) > 0)
-                    <a href="#/blueprints/{{ $canvasSlug }}/editCanvasItem?type={{ $elementName }}"
+                    <a href="javascript:void(0)"
+                       onclick="leantime.blueprintsController.openModalManually('{{ BASE_URL }}/blueprints/{{ $canvasSlug }}/editCanvasItem?type={{ $elementName }}')"
                        class="btn btn-primary" id="{{ $elementName }}">{!! __('links.add_new_canvas_item' . $canvasSlug) !!}</a>
                 @endif
 

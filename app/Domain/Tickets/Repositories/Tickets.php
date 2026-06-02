@@ -76,7 +76,7 @@ class Tickets
 
     public array $priority = ['1' => 'Critical', '2' => 'High', '3' => 'Medium', '4' => 'Low', '5' => 'Lowest'];
 
-    public array $efforts = ['0.5' => '< 2min', '1' => 'XS', '2' => 'S', '3' => 'M', '5' => 'L', '8' => 'XL', '13' => 'XXL'];
+    public array $efforts = ['0.5' => '30 phút', '1' => '1 tiếng', '2' => '2 tiếng', '4' => '4 tiếng', '8' => '1 ngày', '12' => '1.5 ngày', '16' => '2 ngày'];
 
     public array $type = ['task', 'subtask', 'story', 'bug'];
 

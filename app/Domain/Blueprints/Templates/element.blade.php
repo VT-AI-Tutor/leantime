@@ -35,16 +35,19 @@
                                 &nbsp;&nbsp;&nbsp;
                                 <ul class="dropdown-menu">
                                     <li class="nav-header">{!! __('subtitles.edit') !!}</li>
-                                    <li><a href="#/blueprints/{{ $canvasSlug }}/editCanvasItem/{{ $row['id'] }}"
+                                    <li><a href="javascript:void(0)"
+                                           onclick="leantime.blueprintsController.openModalManually('{{ BASE_URL }}/blueprints/{{ $canvasSlug }}/editCanvasItem/{{ $row['id'] }}')"
                                            data="item_{{ $row['id'] }}"> {!! __('links.edit_canvas_item') !!}</a></li>
-                                    <li><a href="#/blueprints/{{ $canvasSlug }}/delCanvasItem/{{ $row['id'] }}"
+                                    <li><a href="javascript:void(0)"
+                                           onclick="leantime.blueprintsController.openModalManually('{{ BASE_URL }}/blueprints/{{ $canvasSlug }}/delCanvasItem/{{ $row['id'] }}')"
                                            class="delete"
                                            data="item_{{ $row['id'] }}"> {!! __('links.delete_canvas_item') !!}</a></li>
                                 </ul>
                             @endif
                         </div>
 
-                        <h4><a href="#/blueprints/{{ $canvasSlug }}/editCanvasItem/{{ $row['id'] }}"
+                        <h4><a href="javascript:void(0)"
+                               onclick="leantime.blueprintsController.openModalManually('{{ BASE_URL }}/blueprints/{{ $canvasSlug }}/editCanvasItem/{{ $row['id'] }}')"
                                data="item_{{ $row['id'] }}">{{ $row['description'] }}</a></h4>
 
                         @if($row['conclusion'] != '')
@@ -140,8 +143,9 @@
     @endforeach
     <br />
     @if($login::userIsAtLeast($roles::$editor))
-        <a href="#/blueprints/{{ $canvasSlug }}/editCanvasItem?type={{ $elementName }}"
-           class="" id="{{ $elementName }}"
+        <a href="javascript:void(0)"
+           onclick="leantime.blueprintsController.openModalManually('{{ BASE_URL }}/blueprints/{{ $canvasSlug }}/editCanvasItem?type={{ $elementName }}')"
+           id="{{ $elementName }}"
            style="padding-bottom: 10px;">{!! __('links.add_new_canvas_item') !!}</a>
     @endif
 </div>

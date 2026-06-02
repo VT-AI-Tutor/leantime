@@ -26,7 +26,13 @@
 <form class="formModal" method="post" action="{{ BASE_URL }}/tickets/editMilestone/{{ $currentMilestone->id }}" style="min-width: 250px;">
 
     <label>{!! __('label.milestone_title') !!}</label>
-    <input type="text" name="headline" value="{{ $currentMilestone->headline }}" placeholder="{{ __('label.milestone_title') }}"/><br />
+    <input type="text" name="headline" value="{{ $currentMilestone->headline }}" placeholder="{{ __('label.milestone_title') }}" style="width:100%;"/><br />
+
+    <label>{!! __('label.description') !!}</label>
+    <textarea name="description" id="milestoneDescription" class="tiptapSimple">{!! ($currentMilestone->description ?? '') !== '' ? htmlentities($currentMilestone->description) : '' !!}</textarea><br />
+
+    <x-global::checklist name="checklist" :items="$currentMilestone->acceptanceCriteria ?? ''" />
+    <br />
 
     <label class="control-label">{!! __('label.project') !!}</label>
     <select name="projectId" class="tw-w-full">
@@ -110,6 +116,14 @@
 
         leantime.ticketsController.initSimpleColorPicker();
         leantime.ticketsController.initMilestoneDates();
+
+        if (window.leantime && window.leantime.tiptapController) {
+            leantime.tiptapController.initSimpleEditor();
+        }
+
+        if (window.leantime && window.leantime.checklistController) {
+            leantime.checklistController.init();
+        }
 
         @if (!$login::userIsAtLeast($roles::$editor))
             leantime.authController.makeInputReadonly(".nyroModalCont");
