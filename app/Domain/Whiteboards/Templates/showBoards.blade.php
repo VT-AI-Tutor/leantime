@@ -22,9 +22,32 @@
         @if ($canEdit)
             <div class="row" style="margin-bottom:20px;">
                 <div class="col-md-12">
-                    <a href="javascript:void(0);" class="btn btn-primary newWhiteboardBtn">
+                    <a href="javascript:void(0);" class="btn btn-primary" onclick="leantimeToggleNewWhiteboard(true)">
                         <span class="fa fa-plus"></span> {{ __('buttons.new_whiteboard') }}
                     </a>
+                </div>
+            </div>
+
+            {{-- Inline create panel (toggled with vanilla JS, no modal framework) --}}
+            <div id="newWhiteboardPanel" class="row" style="display:none; margin-bottom:20px;">
+                <div class="col-md-6 col-sm-12">
+                    <div class="ticketBox">
+                        <form method="post" action="{{ BASE_URL }}/whiteboards/showBoards">
+                            @csrf
+                            <input type="hidden" name="newBoard" value="1" />
+                            <h4 style="margin-top:0;">{{ __('headlines.new_whiteboard') }}</h4>
+                            <label for="newWhiteboardTitle">{{ __('label.whiteboard_title') }}</label>
+                            <input type="text" id="newWhiteboardTitle" name="title" maxlength="255" required
+                                   placeholder="{{ __('label.whiteboard_title') }}"
+                                   style="width:100%; margin-bottom:15px;" />
+                            <button type="submit" class="btn btn-primary">
+                                <span class="fa fa-plus"></span> {{ __('buttons.new_whiteboard') }}
+                            </button>
+                            <a href="javascript:void(0);" class="btn btn-default" onclick="leantimeToggleNewWhiteboard(false)">
+                                {{ __('buttons.cancel') }}
+                            </a>
+                        </form>
+                    </div>
                 </div>
             </div>
         @endif
@@ -72,7 +95,7 @@
                         <h3 style="margin-top:20px;">{{ __('headlines.whiteboards_empty') }}</h3>
                         <p style="color:var(--lighter-font-color);">{{ __('text.whiteboards_empty') }}</p>
                         @if ($canEdit)
-                            <a href="javascript:void(0);" class="btn btn-primary newWhiteboardBtn" style="margin-top:10px;">
+                            <a href="javascript:void(0);" class="btn btn-primary" style="margin-top:10px;" onclick="leantimeToggleNewWhiteboard(true)">
                                 <span class="fa fa-plus"></span> {{ __('buttons.new_whiteboard') }}
                             </a>
                         @endif
@@ -85,44 +108,22 @@
 </div>
 
 @if ($canEdit)
-    {{-- New whiteboard modal --}}
-    <div class="modal fade" id="newWhiteboardModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="post" action="{{ BASE_URL }}/whiteboards/showBoards">
-                    @csrf
-                    <input type="hidden" name="newBoard" value="1" />
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h4 class="modal-title">{{ __('headlines.new_whiteboard') }}</h4>
-                    </div>
-                    <div class="modal-body">
-                        <label for="newWhiteboardTitle">{{ __('label.whiteboard_title') }}</label>
-                        <input type="text" id="newWhiteboardTitle" name="title" maxlength="255" required
-                               placeholder="{{ __('label.whiteboard_title') }}" style="width:100%;" />
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{{ __('buttons.cancel') }}</button>
-                        <button type="submit" class="btn btn-primary">{{ __('buttons.new_whiteboard') }}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    @push('scripts')
-        <script>
-            jQuery(function () {
-                jQuery('.newWhiteboardBtn').on('click', function (e) {
-                    e.preventDefault();
-                    jQuery('#newWhiteboardModal').modal('show');
-                });
-                jQuery('#newWhiteboardModal').on('shown shown.bs.modal', function () {
-                    jQuery(this).find('input[name=title]').trigger('focus');
-                });
-            });
-        </script>
-    @endpush
+    <script>
+        function leantimeToggleNewWhiteboard(show) {
+            var panel = document.getElementById('newWhiteboardPanel');
+            if (!panel) {
+                return;
+            }
+            panel.style.display = show ? 'block' : 'none';
+            if (show) {
+                var input = document.getElementById('newWhiteboardTitle');
+                if (input) {
+                    input.focus();
+                }
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    </script>
 @endif
 
 @endsection
