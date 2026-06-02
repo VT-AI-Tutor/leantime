@@ -22,7 +22,7 @@
         @if ($canEdit)
             <div class="row" style="margin-bottom:20px;">
                 <div class="col-md-12">
-                    <a href="#newWhiteboardModal" data-toggle="modal" class="btn btn-primary">
+                    <a href="javascript:void(0);" class="btn btn-primary newWhiteboardBtn">
                         <span class="fa fa-plus"></span> {{ __('buttons.new_whiteboard') }}
                     </a>
                 </div>
@@ -72,7 +72,7 @@
                         <h3 style="margin-top:20px;">{{ __('headlines.whiteboards_empty') }}</h3>
                         <p style="color:var(--lighter-font-color);">{{ __('text.whiteboards_empty') }}</p>
                         @if ($canEdit)
-                            <a href="#newWhiteboardModal" data-toggle="modal" class="btn btn-primary" style="margin-top:10px;">
+                            <a href="javascript:void(0);" class="btn btn-primary newWhiteboardBtn" style="margin-top:10px;">
                                 <span class="fa fa-plus"></span> {{ __('buttons.new_whiteboard') }}
                             </a>
                         @endif
@@ -113,6 +113,10 @@
     @push('scripts')
         <script>
             jQuery(function () {
+                jQuery('.newWhiteboardBtn').on('click', function (e) {
+                    e.preventDefault();
+                    jQuery('#newWhiteboardModal').modal('show');
+                });
                 jQuery('#newWhiteboardModal').on('shown shown.bs.modal', function () {
                     jQuery(this).find('input[name=title]').trigger('focus');
                 });
